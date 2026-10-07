@@ -1,0 +1,51 @@
+name: Deploy Atmosphere guide
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch maintained PIXIE guide
+        uses: actions/checkout@v4
+        with:
+          repository: ibloud/pixie-device-stewardship
+          ref: main
+          path: upstream
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: upstream/tools/atmosphere-guide/package-lock.json
+      - name: Supply original guide images
+        run: |
+          mkdir -p upstream/tools/atmosphere-guide/public/assets
+          cp upstream/assets/atmosphere-orbit.jpg upstream/tools/atmosphere-guide/public/assets/
+          cp upstream/assets/made-sick-icon.svg upstream/tools/atmosphere-guide/public/assets/
+      - name: Build maintained guide
+        working-directory: upstream/tools/atmosphere-guide
+        run: |
+          npm ci
+          npm run build
+      - name: Apply dedicated guide metadata
+        run: python tools/prepare-guide.py
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: upstream/tools/atmosphere-guide/dist/client
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
