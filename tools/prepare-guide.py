@@ -6,14 +6,14 @@ output = Path("upstream/tools/atmosphere-guide/dist/client")
 index = output / "index.html"
 html = index.read_text()
 head = """<link rel="canonical" href="https://atmosphere.loptrlab.com/">
-<meta name="description" content="Getting to Know the Atmosphere: a PIXIE field guide by Loptr Lab. Explore independent apps, portable identity and resources for learning, creating, publishing, connecting and building.">
-<meta property="og:title" content="Getting to Know the Atmosphere — a PIXIE field guide by Loptr Lab">
+<meta name="description" content="Getting to Know the Atmosphere: a Loptr Lab field guide. Explore independent apps, portable identity and resources for learning, creating, publishing, connecting and building.">
+<meta property="og:title" content="Getting to Know the Atmosphere — a Loptr Lab field guide">
 <meta property="og:description" content="Explore the open social web at your own pace, with clear sources, creator ownership and room for understanding and cooperation.">
 <meta property="og:url" content="https://atmosphere.loptrlab.com/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Loptr Lab">
 <meta property="og:image" content="https://atmosphere.loptrlab.com/assets/atmosphere-orbit.jpg">
-<meta property="og:image:alt" content="A violet orbit illustration accompanying the PIXIE Atmosphere field guide.">
+<meta property="og:image:alt" content="A violet orbit illustration accompanying the Loptr Lab Atmosphere field guide.">
 <meta name="twitter:card" content="summary_large_image">
 """
 index.write_text(html.replace("</head>", head + "</head>"))
