@@ -17,3 +17,7 @@ Guide curation, creative direction and accessibility approach: Dominique Deverea
 Central project directory: https://ibloud.github.io/ecosystem/ .
 
 The old guide address must remain working until custom-domain DNS and HTTPS have been verified. See MIGRATION.md.
+
+## Navigation repair release — October 21, 2026
+
+Rebuild the existing guide from source commit `7e36d49c2ba47480da2e6e3c5d1421ab9ff03b6a`: remove the circular Create callout, clarify destination labels and resource counts, and repair the moved Bluesky lexicon link. Repository layout and hosting remain unchanged.
