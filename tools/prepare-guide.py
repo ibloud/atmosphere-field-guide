@@ -21,7 +21,9 @@ index.write_text(html.replace("</head>", head + "</head>"))
 (output / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://atmosphere.loptrlab.com/</loc></url></urlset>\n')
 sha = subprocess.check_output(["git", "-C", "upstream", "rev-parse", "HEAD"], text=True).strip()
 (output / "source-version.json").write_text(json.dumps({"source_repository": "ibloud/pixie-device-stewardship", "source_commit": sha, "source_path": "tools/atmosphere-guide"}, indent=2) + "\n")
-assert "assets/atmosphere-orbit.jpg" in "".join(p.read_text() for p in (output / "assets").glob("*.js"))
+assert "assets/atmosphere-orbit.svg" in "".join(p.read_text() for p in (output / "assets").glob("*.js"))
+assert (output / "assets/atmosphere-orbit.svg").stat().st_size > 0
+# Retain the JPEG for social previews, whose clients may not support SVG.
 assert (output / "assets/atmosphere-orbit.jpg").stat().st_size > 50000
 assert (output / "assets/made-sick-icon.svg").stat().st_size > 0
 print("Dedicated guide metadata and source provenance prepared.")
