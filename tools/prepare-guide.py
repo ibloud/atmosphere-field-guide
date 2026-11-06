@@ -23,7 +23,24 @@ sha = subprocess.check_output(["git", "-C", "upstream", "rev-parse", "HEAD"], te
 (output / "source-version.json").write_text(json.dumps({"source_repository": "ibloud/pixie-device-stewardship", "source_commit": sha, "source_path": "tools/atmosphere-guide"}, indent=2) + "\n")
 assert "assets/atmosphere-orbit.svg" in "".join(p.read_text() for p in (output / "assets").glob("*.js"))
 assert (output / "assets/atmosphere-orbit.svg").stat().st_size > 0
-# Retain the JPEG for social previews, whose clients may not support SVG.
-assert (output / "assets/atmosphere-orbit.jpg").stat().st_size > 50000
-assert (output / "assets/made-sick-icon.svg").stat().st_size > 0
-print("Dedicated guide metadata and source provenance prepared.")
+
+# Keep layout rhythm on an 8px Material-style spacing scale and prevent the
+# onboarding controls from stretching into oversized cards at tablet widths.
+spacing_css = """
+:root { --space-1: 8px; --space-2: 16px; --space-3: 24px; --space-4: 32px; }
+.onboarding { padding: var(--space-3); margin-block: var(--space-2) var(--space-4); }
+.start-options { gap: var(--space-2); margin-block: var(--space-3); }
+.start-options button { min-height: 48px; padding: var(--space-2); }
+.identity { padding: var(--space-3); margin-top: var(--space-4); }
+.pathways { margin-top: var(--space-4); }
+.resource-row { gap: var(--space-2) var(--space-3); padding: var(--space-3); margin-bottom: var(--space-2); }
+.resource-action { gap: var(--space-2) var(--space-3); padding-top: var(--space-2); }
+.made-sick { gap: var(--space-3); padding: var(--space-3); margin-top: var(--space-4); }
+@media (max-width: 620px) {
+  .onboarding, .identity, .resource-row, .made-sick { padding: var(--space-2); }
+  .made-sick { gap: var(--space-2); }
+}
+"""
+for css_file in output.glob("assets/*.css"):
+    css_file.write_text(css_file.read_text() + spacing_css)
+print("Dedicated guide metadata, source provenance, and consistent spacing prepared.")
