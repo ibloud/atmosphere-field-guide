@@ -2,6 +2,7 @@
   "name": "atmosphere-field-guide-preview",
   "private": true,
   "scripts": {
+    "build": "bash tools/build-preview.sh",
     "dev": "python3 -m http.server 4173 --directory .preview/dist/client"
   }
 }

@@ -1,0 +1,5 @@
+{
+  "buildCommand": "bash tools/build-preview.sh",
+  "outputDirectory": ".preview/dist/client",
+  "cleanUrls": true
+}
