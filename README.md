@@ -14,6 +14,12 @@ Changes to the upstream source require a fresh manual workflow run here. The bui
 
 The maintained source now includes a free starter kit for artist-owned PDS identities and carefully planned migrations from another PDS: [PDS kit source](https://github.com/ibloud/pixie-device-stewardship/tree/main/tools/atmosphere-guide/pds-kit). It includes deployment and provider-selection documentation, migration safety gates, a read-only server preflight, a pinned official installer download with checksum, and a separate execution wrapper requiring explicit confirmation. Account/DID/PLC migration is not automated; use the official migration guidance and rehearse with a disposable account. After source changes merge, run **Deploy Atmosphere guide** to publish the refreshed guide.
 
+## Field Note 012 — Your Infrastructure Is a Business Decision
+
+The maintained guide now includes an essay on creative independence, ownership, network effects, platform dependency, and the economics of running your own infrastructure. It is published in the guide as an in-page **Field Note 012** and is also maintained as source in [PIXIE Device Stewardship](https://github.com/ibloud/pixie-device-stewardship/blob/main/tools/atmosphere-guide/field-notes/your-infrastructure-is-a-business-decision.md).
+
+The article emphasizes informed choices rather than blanket self-hosting: convenience, distribution, expertise, ownership, control, and exit options all have costs and value. No PDS or hosting provider sponsorship, affiliate, referral commission, or promotional obligation is involved.
+
 ## Attribution
 
 Guide curation, creative direction and accessibility approach: Dominique Devereaux / Loptr Lab. Initial resource collection: atblueprints and awesome-atproto contributors, whose CC0 credit and license remain linked from the guide. Individual resources retain their own authorship and licenses. Made Sick uses its supplied icon.
