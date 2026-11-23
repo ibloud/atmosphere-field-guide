@@ -35,3 +35,13 @@ The old guide address must remain working until custom-domain DNS and HTTPS have
 ## Navigation repair release — October 21, 2026
 
 Rebuild the existing guide from source commit `7e36d49c2ba47480da2e6e3c5d1421ab9ff03b6a`: remove the circular Create callout, clarify destination labels and resource counts, and repair the moved Bluesky lexicon link. Repository layout and hosting remain unchanged.
+
+## Field Notes publication — November 23, 2026
+
+The maintained guide source now publishes individual static Field Notes routes and an archive. After upstream changes merge, this repository must be updated or the **Deploy Atmosphere guide** workflow must be run manually to fetch the latest source and publish it to GitHub Pages.
+
+- Archive: https://atmosphere.loptrlab.com/field-notes/
+- Field Note 013: https://atmosphere.loptrlab.com/field-notes/an-artist-should-be-a-node-not-a-tenant/
+- Field Note 012: https://atmosphere.loptrlab.com/field-notes/your-infrastructure-is-a-business-decision/
+
+These routes are expected after the deployment workflow completes; do not treat them as live until verified.
