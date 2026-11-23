@@ -112,8 +112,8 @@ jobs:
                   raise SystemExit(f"Field Note lacks title or heading: {rel}")
               if "/assets/atmosphere.css" not in html:
                   raise SystemExit(f"Field Note does not use the shared stylesheet: {rel}")
-              if 'aria-label="Breadcrumb"' not in html:
-                  raise SystemExit(f"Field Note lacks breadcrumbs: {rel}")
+              if 'aria-label="Breadcrumb"' in html:
+                  raise SystemExit(f"Redundant breadcrumb navigation must not be published: {rel}")
               for href in parser.hrefs:
                   if href.startswith("/field-notes/") and not href.startswith("/field-notes/#"):
                       target = root / href.lstrip("/")
