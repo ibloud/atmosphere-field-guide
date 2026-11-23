@@ -20,6 +20,10 @@ The maintained guide now includes an essay on creative independence, ownership, 
 
 The article emphasizes informed choices rather than blanket self-hosting: convenience, distribution, expertise, ownership, control, and exit options all have costs and value. No PDS or hosting provider sponsorship, affiliate, referral commission, or promotional obligation is involved.
 
+## Infrastructure Architecture — November 23, 2026
+
+The new [Infrastructure Architecture working note](https://github.com/ibloud/pixie-device-stewardship/blob/main/docs/INFRASTRUCTURE-ARCHITECTURE.md) separates PDS identity/records, game runtime, static delivery, object storage, private Creator OS data, and realtime game services. It proposes a hybrid owned-node/VPS/object-storage strategy, procurement and operating-cost gates, and a staged proof for Atmosphere game distribution. This is a proposal—not a claim of deployment.
+
 ## Attribution
 
 Guide curation, creative direction and accessibility approach: Dominique Devereaux / Loptr Lab. Initial resource collection: atblueprints and awesome-atproto contributors, whose CC0 credit and license remain linked from the guide. Individual resources retain their own authorship and licenses. Made Sick uses its supplied icon.
