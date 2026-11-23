@@ -45,3 +45,8 @@ The maintained guide source now publishes individual static Field Notes routes a
 - Field Note 012: https://atmosphere.loptrlab.com/field-notes/your-infrastructure-is-a-business-decision/
 
 These routes are expected after the deployment workflow completes; do not treat them as live until verified.
+
+
+## Deployment and source synchronization
+
+The deployment workflow builds the maintained guide from `ibloud/pixie-device-stewardship` on its `main` branch. It runs on pushes and manual dispatch, and polls upstream every 30 minutes. Scheduled checks compare the deployed `source-version.json` with upstream and deploy only when the source commit differs or the provenance endpoint cannot be read. The build verifies the Field Notes archive, article routes, shared stylesheet, illustration, breadcrumbs, local links, and source provenance before publishing.
