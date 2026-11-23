@@ -8,7 +8,7 @@ The maintained guide source lives in [PIXIE Device Stewardship](https://github.c
 
 Push a deployment change here or run **Deploy Atmosphere guide** from Actions. The workflow builds the current PIXIE guide source, copies its original Made Sick icon and repaired orbit image, applies the guide's canonical/social metadata, and deploys only static assets. No login, analytics or publishing integration is added.
 
-Changes to the upstream source require a fresh manual workflow run here. The build records the upstream commit in source-version.json.
+Changes to the upstream source require a fresh manual workflow run here. The build records the upstream commit in source-version.json. Field Notes are published as a separate static archive and article routes under `/field-notes/`, not embedded in the guide.
 
 ## Atmosphere Independence Kit — November 23, 2026
 
