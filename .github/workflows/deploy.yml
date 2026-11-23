@@ -83,7 +83,7 @@ jobs:
           required_assets = ["assets/atmosphere.css", "assets/artist-node-architecture.svg", "source-version.json"]
           missing_assets = [p for p in required_assets if not (root / p).is_file()]
           if missing_assets:
-              raise SystemExit("Field Notes assets/provenance missing: " + ", ".join(missing_assets)
+              raise SystemExit("Field Notes assets/provenance missing: " + ", ".join(missing_assets))
           css = (root / "assets/atmosphere.css").read_text(encoding="utf-8")
           if "Shared Field Notes publication components" not in css:
               raise SystemExit("Generated shared stylesheet lacks Field Notes publication components")
@@ -106,7 +106,7 @@ jobs:
               parser.feed(html)
               if "<title>" not in html or "<h1" not in html:
                   raise SystemExit(f"Field Note lacks title or heading: {rel}")
-              if not __import__("re").search(r'href=["\\']?/assets/atmosphere\\.css(?:[?#][^"\\']*)?["\\']?', html):
+              if "/assets/atmosphere.css" not in html:
                   raise SystemExit(f"Field Note does not use the shared stylesheet: {rel}")
               if 'aria-label="Breadcrumb"' not in html:
                   raise SystemExit(f"Field Note lacks breadcrumbs: {rel}")
