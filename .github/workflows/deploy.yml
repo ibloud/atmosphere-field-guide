@@ -70,6 +70,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           from html.parser import HTMLParser
+          from urllib.parse import urlsplit
 
           root = Path("upstream/tools/atmosphere-guide/dist/client")
           required = [
@@ -94,7 +95,11 @@ jobs:
               def __init__(self):
                   super().__init__()
                   self.hrefs = []
+                  self.stylesheets = []
               def handle_starttag(self, tag, attrs):
+                  attributes = dict(attrs)
+                  if tag == "link" and "stylesheet" in (attributes.get("rel") or "").split():
+                      self.stylesheets.append(attributes.get("href") or "")
                   for key, value in attrs:
                       if key in ("href", "src") and value:
                           self.hrefs.append(value)
@@ -106,7 +111,10 @@ jobs:
               parser.feed(html)
               if "<title>" not in html or "<h1" not in html:
                   raise SystemExit(f"Field Note lacks title or heading: {rel}")
-              if 'href="/assets/atmosphere.css"' not in html:
+              if not any(
+                  not url.scheme and not url.netloc and url.path == "/assets/atmosphere.css"
+                  for url in map(urlsplit, parser.stylesheets)
+              ):
                   raise SystemExit(f"Field Note does not use the shared stylesheet: {rel}")
               if 'aria-label="Breadcrumb"' not in html:
                   raise SystemExit(f"Field Note lacks breadcrumbs: {rel}")
