@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '17,47 * * * *'
 permissions:
   contents: read
   pages: write
@@ -11,7 +13,28 @@ concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
+  sync-check:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.compare.outputs.changed }}
+    steps:
+      - name: Compare upstream source with deployed version
+        id: compare
+        run: |
+          set -euo pipefail
+          upstream=$(curl --fail --silent --show-error --max-time 15 https://api.github.com/repos/ibloud/pixie-device-stewardship/commits/main | python -c 'import json,sys; print(json.load(sys.stdin)["sha"])')
+          deployed=$(curl --fail --silent --show-error --max-time 15 https://atmosphere.loptrlab.com/source-version.json | python -c 'import json,sys; print(json.load(sys.stdin).get("source_commit", ""))' || true)
+          if [ -z "$deployed" ] || [ "$upstream" != "$deployed" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Deployment needed: upstream=$upstream deployed=$deployed"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Deployment is current at $upstream"
+          fi
   deploy:
+    if: always() && (github.event_name != 'schedule' || needs.sync-check.outputs.changed == 'true')
+    needs: sync-check
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -42,6 +65,60 @@ jobs:
           npm run build
       - name: Apply dedicated guide metadata
         run: python tools/prepare-guide.py
+      - name: Verify Field Notes publication
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+
+          root = Path("upstream/tools/atmosphere-guide/dist/client")
+          required = [
+              "field-notes/index.html",
+              "field-notes/an-artist-should-be-a-node-not-a-tenant/index.html",
+              "field-notes/your-infrastructure-is-a-business-decision/index.html",
+          ]
+          missing = [p for p in required if not (root / p).is_file()]
+          if missing:
+              raise SystemExit("Field Notes publication missing: " + ", ".join(missing))
+          required_assets = ["assets/atmosphere.css", "assets/artist-node-architecture.svg", "source-version.json"]
+          missing_assets = [p for p in required_assets if not (root / p).is_file()]
+          if missing_assets:
+              raise SystemExit("Field Notes assets/provenance missing: " + ", ".join(missing_assets))
+          css = (root / "assets/atmosphere.css").read_text(encoding="utf-8")
+          if "Shared Field Notes publication components" not in css:
+              raise SystemExit("Generated shared stylesheet lacks Field Notes publication components")
+          if "source_commit" not in (root / "source-version.json").read_text(encoding="utf-8"):
+              raise SystemExit("Source provenance is missing")
+
+          class Links(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.hrefs = []
+              def handle_starttag(self, tag, attrs):
+                  for key, value in attrs:
+                      if key in ("href", "src") and value:
+                          self.hrefs.append(value)
+
+          for rel in required:
+              file = root / rel
+              html = file.read_text(encoding="utf-8")
+              parser = Links()
+              parser.feed(html)
+              if "<title>" not in html or "<h1" not in html:
+                  raise SystemExit(f"Field Note lacks title or heading: {rel}")
+              if 'href="/assets/atmosphere.css"' not in html:
+                  raise SystemExit(f"Field Note does not use the shared stylesheet: {rel}")
+              if 'aria-label="Breadcrumb"' not in html:
+                  raise SystemExit(f"Field Note lacks breadcrumbs: {rel}")
+              for href in parser.hrefs:
+                  if href.startswith("/field-notes/") and not href.startswith("/field-notes/#"):
+                      target = root / href.lstrip("/")
+                      if href.endswith("/"):
+                          target = target / "index.html"
+                      if not target.is_file():
+                          raise SystemExit(f"Broken Field Notes link in {rel}: {href}")
+          print("Field Notes routes, shared CSS, assets, breadcrumbs, links, and provenance verified.")
+          PY
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
