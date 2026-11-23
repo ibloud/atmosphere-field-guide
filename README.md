@@ -12,7 +12,7 @@ Changes to the upstream source require a fresh manual workflow run here. The bui
 
 ## Atmosphere Independence Kit — November 23, 2026
 
-The maintained source now includes a free starter kit for artist-owned PDS identities and carefully planned migrations from another PDS: [PDS kit source](https://github.com/ibloud/pixie-device-stewardship/tree/main/tools/atmosphere-guide/pds-kit). It includes deployment and provider-selection documentation, migration safety gates, a read-only server preflight, and a script that downloads the official installer for review without executing it. Account/DID/PLC migration is not automated; use the official migration guidance and rehearse with a disposable account. After source changes merge, run **Deploy Atmosphere guide** to publish the refreshed guide.
+The maintained source now includes a free starter kit for artist-owned PDS identities and carefully planned migrations from another PDS: [PDS kit source](https://github.com/ibloud/pixie-device-stewardship/tree/main/tools/atmosphere-guide/pds-kit). It includes deployment and provider-selection documentation, migration safety gates, a read-only server preflight, a pinned official installer download with checksum, and a separate execution wrapper requiring explicit confirmation. Account/DID/PLC migration is not automated; use the official migration guidance and rehearse with a disposable account. After source changes merge, run **Deploy Atmosphere guide** to publish the refreshed guide.
 
 ## Attribution
 
