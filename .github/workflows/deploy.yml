@@ -117,7 +117,28 @@ jobs:
                           target = target / "index.html"
                       if not target.is_file():
                           raise SystemExit(f"Broken Field Notes link in {rel}: {href}")
-          print("Field Notes routes, shared CSS, assets, breadcrumbs, links, and provenance verified.")
+          # Visitor navigation must remain on the custom domain; GitHub URLs are source links only.
+          archive = (root / "field-notes/index.html").read_text(encoding="utf-8")
+          note013 = (root / "field-notes/an-artist-should-be-a-node-not-a-tenant/index.html").read_text(encoding="utf-8")
+          note012 = (root / "field-notes/your-infrastructure-is-a-business-decision/index.html").read_text(encoding="utf-8")
+          expected = [
+              (archive, 'href="/field-notes/an-artist-should-be-a-node-not-a-tenant/"'),
+              (archive, 'href="/field-notes/your-infrastructure-is-a-business-decision/"'),
+              (note013, 'href="/field-notes/"'),
+              (note013, 'href="/field-notes/your-infrastructure-is-a-business-decision/"'),
+              (note012, 'href="/field-notes/"'),
+              (note012, 'href="/field-notes/an-artist-should-be-a-node-not-a-tenant/"'),
+          ]
+          for html, href in expected:
+              if href not in html:
+                  raise SystemExit("Visitor navigation missing custom-domain route: " + href)
+          for rel, html in [("archive", archive), ("Field Note 013", note013), ("Field Note 012", note012)]:
+              breadcrumb = __import__("re").search(r'<nav class="breadcrumbs[^>]*>(.*?)</nav>', html, __import__("re").S)
+              if not breadcrumb:
+                  raise SystemExit("Missing breadcrumb navigation in " + rel)
+              if "github.com" in breadcrumb.group(1):
+                  raise SystemExit("Breadcrumb must not link to GitHub source pages: " + rel)
+          print("Field Notes routes, shared CSS, assets, custom-domain navigation, breadcrumbs, links, and provenance verified.")
           PY
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
