@@ -42,6 +42,47 @@ jobs:
           npm run build
       - name: Apply dedicated guide metadata
         run: python tools/prepare-guide.py
+      - name: Verify Field Notes publication
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+
+          root = Path("upstream/tools/atmosphere-guide/dist/client")
+          required = [
+              "field-notes/index.html",
+              "field-notes/an-artist-should-be-a-node-not-a-tenant/index.html",
+              "field-notes/your-infrastructure-is-a-business-decision/index.html",
+          ]
+          missing = [p for p in required if not (root / p).is_file()]
+          if missing:
+              raise SystemExit("Field Notes publication missing: " + ", ".join(missing))
+
+          class Links(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.hrefs = []
+              def handle_starttag(self, tag, attrs):
+                  for key, value in attrs:
+                      if key in ("href", "src") and value:
+                          self.hrefs.append(value)
+
+          for rel in required:
+              file = root / rel
+              html = file.read_text(encoding="utf-8")
+              parser = Links()
+              parser.feed(html)
+              if "<title>" not in html or "<h1" not in html:
+                  raise SystemExit(f"Field Note lacks title or heading: {rel}")
+              for href in parser.hrefs:
+                  if href.startswith("/field-notes/") and not href.startswith("/field-notes/#"):
+                      target = root / href.lstrip("/")
+                      if href.endswith("/"):
+                          target = target / "index.html"
+                      if not target.is_file():
+                          raise SystemExit(f"Broken Field Notes link in {rel}: {href}")
+          print("Field Notes archive and article pages verified in deployment artifact.")
+          PY
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
