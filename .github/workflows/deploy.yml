@@ -106,7 +106,7 @@ jobs:
               parser.feed(html)
               if "<title>" not in html or "<h1" not in html:
                   raise SystemExit(f"Field Note lacks title or heading: {rel}")
-              if 'href="/assets/atmosphere.css"' not in html:
+              if not __import__("re").search(r'href=["\']?/assets/atmosphere\\.css(?:[?#][^"\']*)?["\']?', html):
                   raise SystemExit(f"Field Note does not use the shared stylesheet: {rel}")
               if 'aria-label="Breadcrumb"' not in html:
                   raise SystemExit(f"Field Note lacks breadcrumbs: {rel}")
