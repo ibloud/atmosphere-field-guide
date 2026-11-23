@@ -106,7 +106,7 @@ jobs:
               parser.feed(html)
               if "<title>" not in html or "<h1" not in html:
                   raise SystemExit(f"Field Note lacks title or heading: {rel}")
-              if not __import__("re").search(r'href=["\']?/assets/atmosphere\.css(?:[?#][^"\']*)?["\']?', html):
+              if "/assets/atmosphere.css" not in html:
                   raise SystemExit(f"Field Note does not use the shared stylesheet: {rel}")
               if 'aria-label="Breadcrumb"' not in html:
                   raise SystemExit(f"Field Note lacks breadcrumbs: {rel}")
@@ -117,7 +117,6 @@ jobs:
                           target = target / "index.html"
                       if not target.is_file():
                           raise SystemExit(f"Broken Field Notes link in {rel}: {href}")
-          # Visitor navigation must remain on the custom domain; GitHub URLs are source links only.
           archive = (root / "field-notes/index.html").read_text(encoding="utf-8")
           note013 = (root / "field-notes/an-artist-should-be-a-node-not-a-tenant/index.html").read_text(encoding="utf-8")
           note012 = (root / "field-notes/your-infrastructure-is-a-business-decision/index.html").read_text(encoding="utf-8")
@@ -143,7 +142,10 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
+          name: pages-${{ github.run_id }}-${{ github.run_attempt }}
           path: upstream/tools/atmosphere-guide/dist/client
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: pages-${{ github.run_id }}-${{ github.run_attempt }}
