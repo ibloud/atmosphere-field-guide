@@ -23,7 +23,11 @@ jobs:
         id: compare
         run: |
           set -euo pipefail
-          upstream=$(curl --fail --silent --show-error --max-time 15 https://api.github.com/repos/ibloud/pixie-device-stewardship/commits/main | python -c 'import json,sys; print(json.load(sys.stdin)["sha"])')
+          upstream=$(git ls-remote https://github.com/ibloud/pixie-device-stewardship.git refs/heads/main | cut -f1)
+          if [ -z "$upstream" ]; then
+            echo "Unable to resolve upstream main commit" >&2
+            exit 1
+          fi
           deployed=$(curl --fail --silent --show-error --max-time 15 https://atmosphere.loptrlab.com/source-version.json | python -c 'import json,sys; print(json.load(sys.stdin).get("source_commit", ""))' || true)
           if [ -z "$deployed" ] || [ "$upstream" != "$deployed" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
