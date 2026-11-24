@@ -1,5 +1,7 @@
 name: Deploy Atmosphere guide
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
@@ -7,42 +9,14 @@ on:
     - cron: '17,47 * * * *'
 permissions:
   contents: read
-  pages: write
-  id-token: write
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: atmosphere-pages-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
+  cancel-in-progress: false
 jobs:
-  sync-check:
-    if: github.event_name == 'schedule'
+  build:
     runs-on: ubuntu-latest
     outputs:
-      changed: ${{ steps.compare.outputs.changed }}
-    steps:
-      - name: Compare upstream source with deployed version
-        id: compare
-        run: |
-          set -euo pipefail
-          upstream=$(git ls-remote https://github.com/ibloud/pixie-device-stewardship.git refs/heads/main | cut -f1)
-          if [ -z "$upstream" ]; then
-            echo "Unable to resolve upstream main commit" >&2
-            exit 1
-          fi
-          deployed=$(curl --fail --silent --show-error --max-time 15 https://atmosphere.loptrlab.com/source-version.json | python -c 'import json,sys; print(json.load(sys.stdin).get("source_commit", ""))' || true)
-          if [ -z "$deployed" ] || [ "$upstream" != "$deployed" ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "Deployment needed: upstream=$upstream deployed=$deployed"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Deployment is current at $upstream"
-          fi
-  deploy:
-    if: always() && (github.event_name != 'schedule' || needs.sync-check.outputs.changed == 'true')
-    needs: sync-check
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+      publish: ${{ steps.check.outputs.publish }}
     steps:
       - uses: actions/checkout@v4
       - name: Fetch maintained PIXIE guide
@@ -52,98 +26,75 @@ jobs:
           ref: main
           path: upstream
           persist-credentials: false
+      - name: Check actual public release
+        id: check
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          source=$(git -C upstream rev-parse HEAD)
+          if [ "$EVENT" = schedule ] && python tools/verify-publication.py live --source "$source" --wrapper "$GITHUB_SHA"; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v4
+        if: steps.check.outputs.publish == 'true'
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: upstream/tools/atmosphere-guide/package-lock.json
       - name: Supply original guide images
+        if: steps.check.outputs.publish == 'true'
         run: |
           mkdir -p upstream/tools/atmosphere-guide/public/assets
           cp upstream/assets/atmosphere-orbit.jpg upstream/tools/atmosphere-guide/public/assets/
           cp upstream/assets/made-sick-icon.svg upstream/tools/atmosphere-guide/public/assets/
       - name: Build maintained guide
+        if: steps.check.outputs.publish == 'true'
         working-directory: upstream/tools/atmosphere-guide
         run: |
           npm ci
           npm run build
-      - name: Apply dedicated guide metadata
-        run: python tools/prepare-guide.py
-      - name: Verify Field Notes publication
+      - name: Test publication verifier
+        run: python -m unittest discover -s tools -p 'test_publication.py' -v
+      - name: Prepare and verify publication
+        if: steps.check.outputs.publish == 'true'
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          from html.parser import HTMLParser
-
-          root = Path("upstream/tools/atmosphere-guide/dist/client")
-          required = [
-              "field-notes/index.html",
-              "field-notes/an-artist-should-be-a-node-not-a-tenant/index.html",
-              "field-notes/your-infrastructure-is-a-business-decision/index.html",
-          ]
-          missing = [p for p in required if not (root / p).is_file()]
-          if missing:
-              raise SystemExit("Field Notes publication missing: " + ", ".join(missing))
-          required_assets = ["assets/atmosphere.css", "assets/artist-node-architecture.svg", "source-version.json"]
-          missing_assets = [p for p in required_assets if not (root / p).is_file()]
-          if missing_assets:
-              raise SystemExit("Field Notes assets/provenance missing: " + ", ".join(missing_assets))
-          css = (root / "assets/atmosphere.css").read_text(encoding="utf-8")
-          if "Shared Field Notes publication components" not in css:
-              raise SystemExit("Generated shared stylesheet lacks Field Notes publication components")
-          if "source_commit" not in (root / "source-version.json").read_text(encoding="utf-8"):
-              raise SystemExit("Source provenance is missing")
-
-          class Links(HTMLParser):
-              def __init__(self):
-                  super().__init__()
-                  self.hrefs = []
-              def handle_starttag(self, tag, attrs):
-                  for key, value in attrs:
-                      if key in ("href", "src") and value:
-                          self.hrefs.append(value)
-
-          for rel in required:
-              file = root / rel
-              html = file.read_text(encoding="utf-8")
-              parser = Links()
-              parser.feed(html)
-              if "<title>" not in html or "<h1" not in html:
-                  raise SystemExit(f"Field Note lacks title or heading: {rel}")
-              if "/assets/atmosphere.css" not in html:
-                  raise SystemExit(f"Field Note does not use the shared stylesheet: {rel}")
-              if 'aria-label="Breadcrumb"' in html:
-                  raise SystemExit(f"Redundant breadcrumb navigation must not be published: {rel}")
-              for href in parser.hrefs:
-                  if href.startswith("/field-notes/") and not href.startswith("/field-notes/#"):
-                      target = root / href.lstrip("/")
-                      if href.endswith("/"):
-                          target = target / "index.html"
-                      if not target.is_file():
-                          raise SystemExit(f"Broken Field Notes link in {rel}: {href}")
-          archive = (root / "field-notes/index.html").read_text(encoding="utf-8")
-          note013 = (root / "field-notes/an-artist-should-be-a-node-not-a-tenant/index.html").read_text(encoding="utf-8")
-          note012 = (root / "field-notes/your-infrastructure-is-a-business-decision/index.html").read_text(encoding="utf-8")
-          expected = [
-              (archive, 'href="/field-notes/an-artist-should-be-a-node-not-a-tenant/"'),
-              (archive, 'href="/field-notes/your-infrastructure-is-a-business-decision/"'),
-              (note013, 'href="/field-notes/"'),
-              (note013, 'href="/field-notes/your-infrastructure-is-a-business-decision/"'),
-              (note012, 'href="/field-notes/"'),
-              (note012, 'href="/field-notes/an-artist-should-be-a-node-not-a-tenant/"'),
-          ]
-          for html, href in expected:
-              if href not in html:
-                  raise SystemExit("Visitor navigation missing custom-domain route: " + href)
-          print("Field Notes routes, shared CSS, assets, custom-domain navigation, links, and provenance verified.")
-          PY
-      - uses: actions/configure-pages@v5
+          python tools/prepare-guide.py
+          python tools/verify-publication.py build --source "$(git -C upstream rev-parse HEAD)" --wrapper "$GITHUB_SHA"
       - uses: actions/upload-pages-artifact@v3
+        if: steps.check.outputs.publish == 'true' && github.event_name != 'pull_request'
         with:
           name: pages-${{ github.run_id }}-${{ github.run_attempt }}
           path: upstream/tools/atmosphere-guide/dist/client
+      - uses: actions/upload-artifact@v4
+        if: steps.check.outputs.publish == 'true' && github.event_name != 'pull_request'
+        with:
+          name: release-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: upstream/tools/atmosphere-guide/dist/client/publication-manifest.json
+  deploy:
+    if: github.event_name != 'pull_request' && needs.build.outputs.publish == 'true'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: release-proof
+      - uses: actions/configure-pages@v5
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
         with:
           artifact_name: pages-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Verify public content against exact build
+        run: python tools/verify-publication.py live --expected release-proof/publication-manifest.json --attempts 8
